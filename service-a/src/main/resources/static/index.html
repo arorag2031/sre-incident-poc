@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SRE Incident POC — Demo Console</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; background: #0b1220; color: #e8eefc; }
+    main { max-width: 880px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p { color: #9db0d0; line-height: 1.5; }
+    a { color: #7dd3fc; }
+    ol { padding-left: 20px; }
+    li { margin: 10px 0; }
+    code { background: #152238; padding: 2px 6px; border-radius: 4px; }
+    .card { background: #111a2e; border: 1px solid #243656; border-radius: 12px; padding: 20px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Service-A Gateway</h1>
+    <p>Click any failure URL to emit a <code>system-failures</code> event. Watch incidents appear in the chatbot sidebar at <a href="http://localhost:8501">http://localhost:8501</a>.</p>
+    <div class="card">
+      <ol>
+        <li><a href="/simulate-crash/null-pointer">/simulate-crash/null-pointer</a></li>
+        <li><a href="/simulate-crash/db-timeout">/simulate-crash/db-timeout</a></li>
+        <li><a href="/simulate-crash/kafka-drop">/simulate-crash/kafka-drop</a></li>
+        <li><a href="/simulate-crash/out-of-memory">/simulate-crash/out-of-memory</a></li>
+        <li><a href="/simulate-crash/auth-lock">/simulate-crash/auth-lock</a></li>
+        <li><a href="/simulate-crash/deadlock">/simulate-crash/deadlock</a></li>
+        <li><a href="/simulate-crash/bad-payload">/simulate-crash/bad-payload</a></li>
+        <li><a href="/simulate-crash/rate-limit">/simulate-crash/rate-limit</a></li>
+        <li><a href="/simulate-crash/disk-full">/simulate-crash/disk-full</a></li>
+        <li><a href="/simulate-crash/circuit-breaker">/simulate-crash/circuit-breaker</a></li>
+      </ol>
+    </div>
+  </main>
+</body>
+</html>

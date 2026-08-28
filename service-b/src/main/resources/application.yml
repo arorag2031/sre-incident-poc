@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: ${SERVICE_NAME:service-b}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/sredb}
+    username: ${SPRING_DATASOURCE_USERNAME:sre}
+    password: ${SPRING_DATASOURCE_PASSWORD:sre}
+    hikari:
+      maximum-pool-size: 4
+      connection-timeout: 3000
+      validation-timeout: 1000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: INFO
+    com.sre.poc: INFO
+
+app:
+  service-name: ${SERVICE_NAME:service-b}
+  failure-channel: ${FAILURE_CHANNEL:system-failures}
+  internal-api-key: ${INTERNAL_API_KEY:poc-internal-key}

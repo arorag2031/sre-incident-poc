@@ -1,0 +1,12 @@
+[
+  {
+    "email": "sre@local.dev",
+    "password": "ChangeMe123!",
+    "name": "SRE Presenter"
+  },
+  {
+    "email": "demo@local.dev",
+    "password": "demo123",
+    "name": "Stakeholder Demo"
+  }
+]

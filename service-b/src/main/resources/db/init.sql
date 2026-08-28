@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGSERIAL PRIMARY KEY,
+    sku VARCHAR(64) NOT NULL,
+    quantity INTEGER NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO orders (sku, quantity, status)
+SELECT 'SKU-1001', 12, 'OPEN'
+WHERE NOT EXISTS (SELECT 1 FROM orders);

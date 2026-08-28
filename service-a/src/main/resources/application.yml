@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: ${SERVICE_NAME:service-a}
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:redis}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: INFO
+    com.sre.poc: INFO
+
+processor:
+  base-url: ${PROCESSOR_BASE_URL:http://service-b:8080}
+
+app:
+  service-name: ${SERVICE_NAME:service-a}
+  failure-channel: ${FAILURE_CHANNEL:system-failures}
+  internal-api-key: ${INTERNAL_API_KEY:poc-internal-key}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      processor:
+        registerHealthIndicator: true
+        slidingWindowSize: 4
+        minimumNumberOfCalls: 2
+        permittedNumberOfCallsInHalfOpenState: 1
+        waitDurationInOpenState: 15s
+        failureRateThreshold: 50
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  timelimiter:
+    instances:
+      processor:
+        timeoutDuration: 2s
+        cancelRunningFuture: true

@@ -1,0 +1,136 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: sre-redis
+    command: ["redis-server", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: sre-postgres
+    environment:
+      POSTGRES_DB: sredb
+      POSTGRES_USER: sre
+      POSTGRES_PASSWORD: sre
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./service-b/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sre -d sredb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  service-b:
+    build:
+      context: ./service-b
+    container_name: sre-service-b
+    environment:
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sredb
+      SPRING_DATASOURCE_USERNAME: sre
+      SPRING_DATASOURCE_PASSWORD: sre
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      LOG_FILE: /logs/service-b/app.json.log
+      SERVICE_NAME: service-b
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-poc-internal-key}
+      FAILURE_CHANNEL: system-failures
+    volumes:
+      - ./logs:/logs
+    command: ["sh", "-c", "mkdir -p /logs/service-b && java -jar /app/app.jar"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  service-a:
+    build:
+      context: ./service-a
+    container_name: sre-service-a
+    environment:
+      SERVER_PORT: "8080"
+      PROCESSOR_BASE_URL: http://service-b:8080
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      LOG_FILE: /logs/service-a/app.json.log
+      SERVICE_NAME: service-a
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-poc-internal-key}
+      FAILURE_CHANNEL: system-failures
+      ALLOW_Display: ${ALLOW_Display:-True}
+      DISPLAY_FLAG_FILE: /config/.env
+    volumes:
+      - ./logs:/logs
+      - ./.env:/config/.env:ro
+    command: ["sh", "-c", "mkdir -p /logs/service-a && java -jar /app/app.jar"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      service-b:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "8082:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  chatbot:
+    build:
+      context: ./chatbot
+    container_name: sre-chatbot
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FAILURE_CHANNEL: system-failures
+      LOG_DIR: /logs
+      CODE_ROOTS: /code/service-a:/code/service-b
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+      GROQ_BASE_URL: ${GROQ_BASE_URL:-https://api.groq.com/openai/v1}
+      SERVICE_A_PUBLIC_URL: http://localhost:8080
+      ALLOW_Display: ${ALLOW_Display:-True}
+      DISPLAY_FLAG_FILE: /config/.env
+    volumes:
+      - ./logs:/logs:ro
+      - ./service-a:/code/service-a:ro
+      - ./service-b:/code/service-b:ro
+      - ./chatbot/users.json:/app/users.json:ro
+      - ./.env:/config/.env:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      service-a:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
